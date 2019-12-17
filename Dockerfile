@@ -8,7 +8,8 @@ COPY . .
 
 RUN apk add --no-cache git \
   && go build -o app \
-  && go get -v gopkg.in/urfave/cli.v2@master && go get github.com/oxequa/realize
+  && go get -v gopkg.in/urfave/cli.v2@master && go get github.com/oxequa/realize \
+  && go get -u -d github.com/golang-migrate/migrate
 
 FROM alpine
 

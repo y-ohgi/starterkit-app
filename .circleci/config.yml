@@ -1,0 +1,32 @@
+version: 2
+
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: ECR login
+          command: |
+            sudo pip install awscli
+            $(aws ecr get-login --no-include-email --region ap-northeast-1)
+      - run:
+          name: ECR push
+          command: |
+            docker build -t 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate --target build .
+            docker push 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate
+            docker build -t 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1} .
+            docker push 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}
+
+aworkflows:
+  version: 2
+  deploy:
+    jobs:
+      - deploy:
+          filters:
+            branches:
+              only:
+                - develop
+                - master
