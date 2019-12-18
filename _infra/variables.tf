@@ -1,3 +1,8 @@
+variable "image_tag" {
+  description = "デプロイ時に用いるコンテナのtag"
+  default     = "latest"
+}
+
 locals {
   workspaces = {
     default = local.stg

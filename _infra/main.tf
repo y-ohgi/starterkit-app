@@ -119,7 +119,7 @@ data "template_file" "container_definitions" {
     name       = local.name
     region     = "ap-northeast-1"
 
-    image_tag = local.workspace["image_tag"]
+    image_tag = var.image_tag
 
     db_port     = "3306"
     db_host     = module.mysql.endpoint
