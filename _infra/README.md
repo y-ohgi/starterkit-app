@@ -4,10 +4,10 @@
 
 ## 2. ECRの作成とイメージのpush
 ```
-$ aws ecr create-repository --repository-name api
+$ aws ecr create-repository --repository-name app
 $ $(aws ecr get-login --no-include-email --region ap-northeast-1)
 $ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-$ docker build -f docker/nginx/Dockerfile -t ${ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:latest .
+$ docker build -t ${ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:latest .
 $ docker push ${ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:latest
 ```
 
