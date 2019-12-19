@@ -15,8 +15,8 @@ $ docker push ${ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:latest
 ```
 $ APP_NAME=<env>-myapp
 $ aws ssm put-parameter --name "/${APP_NAME}/db/database" --value "mydatabase" --type String
-$ aws ssm put-parameter --name "/${APP_NAME}/db/username" --value "myusername" --type String
-$ aws ssm put-parameter --name "/${APP_NAME}/db/password" --value "mypassword" --type SecureString
+$ aws ssm put-parameter --name "/${APP_NAME}/db/master_username" --value "myusername" --type String
+$ aws ssm put-parameter --name "/${APP_NAME}/db/master_password" --value "mypassword" --type SecureString
 ```
 
 ## 4. Terraformコンテナの立ち上げ
@@ -46,6 +46,7 @@ workspaceを使用して環境（本番・ステージング等）の設定し�
 ## 6. 変数の編集
 1. `variables.tf` の `name` を作成するプロダクトに合わせて命名します
     - `name = "${terraform.workspace}-<YOUR PRODUCT NAME>"` 
+2. `variables_<env>.tf` の `remote_bucket` へ `starterkit-inf` で使用したS3 bucketを記載します
 
 ## 7. プロビジョニング
 `plan` でdry-runを実行し、 `apply` でプロビジョニングを実施します。
