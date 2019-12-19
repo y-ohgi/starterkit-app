@@ -1,6 +1,7 @@
 terraform {
   required_version = ">=0.12"
   backend "s3" {
+    #FIXME: 使用する目的に応じて
     key    = "app.tfstate"
     region = "ap-northeast-1"
   }
@@ -21,7 +22,7 @@ data "terraform_remote_state" "inf" {
   config = {
     region = "ap-northeast-1"
     bucket = local.workspace["remote_bucket"]
-    key    = "starterkit-inf"
+    key    = "inf.tfstate"
   }
 }
 
