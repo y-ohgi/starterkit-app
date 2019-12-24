@@ -61,53 +61,9 @@ module "sg_app" {
   ingress_with_security_group_rules = [
     {
       "source_security_group_id" : local.alb_sg_id,
-      "port" : "1323"
+      "port" : "80"
     }
   ]
-}
-
-module "sg_mysql" {
-  source = "./modules/securitygroup"
-
-  vpc_id = local.vpc_id
-
-  name = "${local.name}-mysql"
-  tags = local.tags
-
-  ingress_with_security_group_rules = [
-    {
-      "source_security_group_id" : module.sg_app.sg_id,
-      "port" : "3306"
-    }
-  ]
-}
-
-#########################
-# Aurora MySQL
-#########################
-data "aws_ssm_parameter" "database_name" {
-  name = "/${local.name}/db/database"
-}
-
-data "aws_ssm_parameter" "master_username" {
-  name = "/${local.name}/db/master_username"
-}
-
-data "aws_ssm_parameter" "master_password" {
-  name = "/${local.name}/db/master_password"
-}
-
-module "mysql" {
-  source = "./modules/aurora-mysql"
-
-  name = local.name
-  tags = local.tags
-
-  subnets         = local.subnets
-  security_groups = [module.sg_mysql.sg_id]
-  database_name   = data.aws_ssm_parameter.database_name.value
-  master_username = data.aws_ssm_parameter.master_username.value
-  master_password = data.aws_ssm_parameter.master_password.value
 }
 
 #########################
@@ -122,12 +78,6 @@ data "template_file" "container_definitions" {
     region     = "ap-northeast-1"
 
     image_tag = var.image_tag
-
-    db_port     = "3306"
-    db_host     = module.mysql.endpoint
-    db_user     = data.aws_ssm_parameter.master_username.value
-    db_password = "/${local.name}/db/master_password"
-    db_database = data.aws_ssm_parameter.database_name.value
   }
 }
 
@@ -141,7 +91,7 @@ module "ecs" {
   alb_https_listener_arn = local.alb_https_listener_arn
   container_definitions  = data.template_file.container_definitions.rendered
   ecs_cluster_name       = local.ecs_cluster_name
-  port                   = "1323"
+  port                   = "80"
   security_groups        = [module.sg_app.sg_id]
   subnets                = local.subnets
   vpc_id                 = local.vpc_id

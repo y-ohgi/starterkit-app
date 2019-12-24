@@ -49,34 +49,6 @@ jobs:
             terraform workspace select prd
             terraform apply -auto-approve -var "image_tag=${CIRCLE_SHA1}"
 
-  # RDSへmigration
-  # 
-  # 以下の環境変数をCircleCIで定義してください。　
-  # - AWS_ACCESS_KEY_ID
-  #    - プロビジョニング対象のAWSアクセスキー
-  # - AWS_SECRET_ACCESS_KEY
-  #    - プロビジョニング対象のAWSシークレットアクセスキー
-  migration:
-    docker:
-      - image: circleci/python:3
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          name: Initialize
-          command: |
-            sudo apt install jq
-            sudo pip install awscli
-      - run:
-          name: DB Migration
-          command: |
-            aws ecs run-task \
-                --override='{"containerOverrides":[{"name":"main","command":["sh","-c","migrate -path=db/migrations -database \"mysql://${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:3306)/${DB_DATABASE}\" up"]}]}' \
-                --cluster ${APP_NAME} \
-                --task-definition=${APP_NAME}-migrate \
-                --network-configuration="awsvpcConfiguration={subnets=[${SUBNET}],securityGroups=[$SG_IDS]}" \
-                --launch-type="FARGATE"
-
 aworkflows:
   version: 2
 
@@ -92,6 +64,3 @@ aworkflows:
       - provisioning:
           requires:
             - docker_push
-      - migration:
-          requires:
-            - provisioning
