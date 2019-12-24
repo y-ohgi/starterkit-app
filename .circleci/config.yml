@@ -77,7 +77,7 @@ jobs:
                 --network-configuration="awsvpcConfiguration={subnets=[${SUBNET}],securityGroups=[$SG_IDS]}" \
                 --launch-type="FARGATE"
 
-aworkflows:
+workflows:
   version: 2
 
   # タグを切ったタイミングで本番へデプロイを行う
