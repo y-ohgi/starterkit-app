@@ -1,7 +1,6 @@
 locals {
   stg = {
-    remote_bucket = "starterkit-tf"
-
-    image_tag = "latest"
+    # FIXME: "starterkit-inf" リポジトリで使用したS3のBucket名を入力してください
+    remote_bucket = "tfstate-starterkit"
   }
 }

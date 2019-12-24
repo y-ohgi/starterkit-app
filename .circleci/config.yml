@@ -1,7 +1,16 @@
 version: 2
 
 jobs:
-  build:
+  # DockerのビルドとECRへのpush
+  # 
+  # 以下の環境変数をCircleCIで定義してください。　
+  # - AWS_ACCOUNT_ID
+  #    - プロビジョニング対象のAWSアカウントID
+  # - AWS_ACCESS_KEY_ID
+  #    - プロビジョニング対象のAWSアクセスキー
+  # - AWS_SECRET_ACCESS_KEY
+  #    - プロビジョニング対象のAWSシークレットアクセスキー
+  docker_push:
     docker:
       - image: circleci/python:3
     steps:
@@ -15,23 +24,74 @@ jobs:
       - run:
           name: ECR push
           command: |
-            docker build -t 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate --target build .
-            docker push 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate
-            docker build -t 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1} .
-            docker push 856925507022.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}
+            docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate --target build .
+            docker push ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}-migrate
+            docker build -t ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1} .
+            docker push ${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-1.amazonaws.com/app:${CIRCLE_SHA1}
+
+  # terraformでプロビジョニングの実行
+  # 
+  # 以下の環境変数をCircleCIで定義してください。　
+  # - AWS_ACCESS_KEY_ID
+  #    - プロビジョニング対象のAWSアクセスキー
+  # - AWS_SECRET_ACCESS_KEY
+  #    - プロビジョニング対象のAWSシークレットアクセスキー
+  provisioning:
+    docker:
+      - image: hashicorp/terraform:0.12.18
+    steps:
+      - checkout
+      - setup_remote_docker
       - run:
-          name: ECS Deploy
+          name: 
           command: |
             terraform init
-            terraform workspace select stg
-            terraform apply -var "image_tag=${CIRCLE_SHA1}"
+            terraform workspace select prd
+            terraform apply -auto-approve -var "image_tag=${CIRCLE_SHA1}"
+
+  # RDSへmigration
+  # 
+  # 以下の環境変数をCircleCIで定義してください。　
+  # - AWS_ACCESS_KEY_ID
+  #    - プロビジョニング対象のAWSアクセスキー
+  # - AWS_SECRET_ACCESS_KEY
+  #    - プロビジョニング対象のAWSシークレットアクセスキー
+  migration:
+    docker:
+      - image: circleci/python:3
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Initialize
+          command: |
+            sudo apt install jq
+            sudo pip install awscli
+      - run:
+          name: DB Migration
+          command: |
+            aws ecs run-task \
+                --override='{"containerOverrides":[{"name":"main","command":["sh","-c","migrate -path=db/migrations -database \"mysql://${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:3306)/${DB_DATABASE}\" up"]}]}' \
+                --cluster ${APP_NAME} \
+                --task-definition=${APP_NAME}-migrate \
+                --network-configuration="awsvpcConfiguration={subnets=[${SUBNET}],securityGroups=[$SG_IDS]}" \
+                --launch-type="FARGATE"
 
 aworkflows:
   version: 2
+
+  # タグを切ったタイミングで本番へデプロイを行う
   deploy:
     jobs:
-      - deploy:
+      - docker_push:
           filters:
             branches:
-              only:
-                - master
+              ignore: /.*/
+            tags:
+              only: /^v.*/
+      - provisioning:
+          requires:
+            - docker_push
+      - migration:
+          requires:
+            - provisioning

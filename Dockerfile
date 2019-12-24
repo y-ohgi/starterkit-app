@@ -2,14 +2,17 @@ FROM golang:1.13-alpine as build
 
 WORKDIR /go/app
 
+RUN set -ex \
+  && apk add --no-cache git \
+  && go get -tags "mysql" -u github.com/golang-migrate/migrate/cmd/migrate \
+  && go get github.com/oxequa/realize
+
 ENV GO111MODULE=on
 
 COPY . .
 
-RUN apk add --no-cache git \
-  && go build -o app \
-  && go get -v gopkg.in/urfave/cli.v2@master && go get github.com/oxequa/realize \
-  && go get -u -d github.com/golang-migrate/migrate
+RUN set -ex \
+  && go build -o app
 
 FROM alpine
 

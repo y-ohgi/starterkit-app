@@ -1,7 +1,7 @@
 terraform {
   required_version = ">=0.12"
   backend "s3" {
-    #FIXME: 使用する目的に応じて
+    #FIXME: 使用する目的に応じてkeyの命名を変更してください。 e.g. "api.tfstate"
     key    = "app.tfstate"
     region = "ap-northeast-1"
   }
@@ -20,9 +20,10 @@ data "terraform_remote_state" "inf" {
   workspace = terraform.workspace
 
   config = {
+    # FIXME: "starterkit-inf" リポジトリで使用したtfstate名を入力してください。デフォルトは"inf.tfstate"です。
+    key    = "inf.tfstate"
     region = "ap-northeast-1"
     bucket = local.workspace["remote_bucket"]
-    key    = "inf.tfstate"
   }
 }
 
@@ -49,12 +50,12 @@ locals {
 #########################
 # Security Group
 #########################
-module "sg_api" {
+module "sg_app" {
   source = "./modules/securitygroup"
 
   vpc_id = local.vpc_id
 
-  name = "${local.name}-api"
+  name = "${local.name}"
   tags = local.tags
 
   ingress_with_security_group_rules = [
@@ -75,7 +76,7 @@ module "sg_mysql" {
 
   ingress_with_security_group_rules = [
     {
-      "source_security_group_id" : module.sg_api.sg_id,
+      "source_security_group_id" : module.sg_app.sg_id,
       "port" : "3306"
     }
   ]
@@ -141,7 +142,7 @@ module "ecs" {
   container_definitions  = data.template_file.container_definitions.rendered
   ecs_cluster_name       = local.ecs_cluster_name
   port                   = "1323"
-  security_groups        = [module.sg_api.sg_id]
+  security_groups        = [module.sg_app.sg_id]
   subnets                = local.subnets
   vpc_id                 = local.vpc_id
 }
