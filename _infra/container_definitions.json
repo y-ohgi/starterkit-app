@@ -1,7 +1,7 @@
 [
   {
     "name": "main",
-    "image": "${account_id}.dkr.ecr.${region}.amazonaws.com/app:${image_tag}",
+    "image": "${account_id}.dkr.ecr.${region}.amazonaws.com/${name}:${image_tag}",
     "cpu": 0,
     "memory": 128,
     "portMappings": [
@@ -16,7 +16,7 @@
       "options": {
         "awslogs-region": "${region}",
         "awslogs-group": "/${name}/ecs",
-        "awslogs-stream-prefix": "nginx"
+        "awslogs-stream-prefix": "main"
       }
     },
     "secrets": [
