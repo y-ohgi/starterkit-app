@@ -49,7 +49,7 @@ jobs:
             terraform workspace select prd
             terraform apply -auto-approve -var "image_tag=${CIRCLE_SHA1}"
 
-aworkflows:
+workflows:
   version: 2
 
   # タグを切ったタイミングで本番へデプロイを行う
