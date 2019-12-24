@@ -1,3 +1,9 @@
+starterkit-apply
+---
+
+# About
+<img src="https://github.com/y-ohgi/starterkit-app/blob/master/_infra/docs/architecture.png?raw=true" />  
+
 # How to Start
 ## 1. starterkit-infのプロビジョニング
 [y-ohgi/starterkit-inf](https://github.com/y-ohgi/starterkit-inf) のプロビジョニングが行われていることを前提にします。
@@ -72,6 +78,12 @@ workspaceを使用して環境（本番・ステージング等）の設定し�
 ```
 # terraform apply -var 'image_tag=1.0.0'
 ```
+
+## CDの有効化
+CircleCIを使用してCDを行います（CIツールでCDをするなという説はありますが、CDツールを使用するコストと比較して使い分けましょう）。  
+GitHub Flowを前提に `.circleci/config.yml` を記載しているので適宜編集とCircleCIへ環境変数の定義を行います。
+
+CircleCIではなくGitHub Actionsやその他のツールでも問題ない無いですが、執筆現在（2019/12）でGitHub EnterpriseにGitHub Actionsが対応していないためCircleCI(Enterprise)を選択しました。
 
 ## DBのmigrationの実行
 DBのmigrationは複数の手段があります。  
